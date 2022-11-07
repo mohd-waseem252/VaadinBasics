@@ -1,5 +1,7 @@
 package com.vaadin.entity;
 
+import java.util.OptionalLong;
+
 public class Person {
 
 	private Long id;
@@ -9,10 +11,21 @@ public class Person {
 	public Person() {
 		
 	}
+	
+	
 
 	public Person(Long id, String name, String address) {
 		super();
 		this.id = id;
+		this.name = name;
+		this.address = address;
+	}
+
+
+
+	public Person(String name, String address) {
+		super();
+		this.id = setId();
 		this.name = name;
 		this.address = address;
 	}
@@ -27,8 +40,10 @@ public class Person {
 	/**
 	 * @param id the id to set
 	 */
-	public void setId(long id) {
-		this.id = id;
+	public Long setId() {
+		PersonGrid personGrid = new PersonGrid();
+		Long id = personGrid.persons.stream().mapToLong(s -> s.getId()).max().orElse(0L);
+		return 1L + id;
 	}
 
 	/**

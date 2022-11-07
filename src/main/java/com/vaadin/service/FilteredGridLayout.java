@@ -16,10 +16,12 @@ import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.Column;
 import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.MenuBar.MenuItem;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.TextField;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
@@ -116,35 +118,58 @@ public class FilteredGridLayout extends VerticalLayout {
     public MenuBar gridMenuBar() {
     	menuBar = new MenuBar();
     	
-    	MenuBar.Command command = new MenuBar.Command() {
-			
+   
+    	
+    MenuBar.Command command = new MenuBar.Command() {
+
 			@Override
 			public void menuSelected(MenuItem selectedItem) {
-				openWindow();
 				
+				UI.getCurrent().addWindow(openWindow());	
 			}
-			
-			
-		};
-    	menuBar.addItem("Add",VaadinIcons.PLUS, command);  	
+    		
+    	};
+    	
+     	menuBar.addItem("Add",VaadinIcons.PLUS,command );
+     	
     	return menuBar;
     }
     
     public Window openWindow() {
-    	Window addWindow = new Window("Add Person");
-		VerticalLayout verticalLayout = new VerticalLayout();
+    	
+    	VerticalLayout verticalLayout = new VerticalLayout();
+    	
+    	Window popUp = new Window("Add Person");
+    	popUp.setHeight("300px");
+    	popUp.setWidth("400px");
+    	
+    	popUp.setPosition(400, 200);
+    	TextField addressField = new TextField();
+    	addressField.setCaption("Address");
 		TextField nameField = new TextField();
-		Button saveButton = new Button("save");
+		nameField.setCaption("Name");
+		
+		Button saveButton = new Button("save",click ->{
+			personGrid.addToList(new Person(nameField.getValue(), addressField.getValue()));
+			personGrid.getDataProvider().refreshAll();
+			popUp.close();
+			Notification.show("Added Successfully").setDelayMsec(1000);
+		});
+		
+		
+		
+		
 		Button cancelButton = new Button("cancel");
 		
 		HorizontalLayout buttonLayout = new HorizontalLayout();
-		nameField.setCaption("Name");
-		TextField addressField = new TextField();
-		addressField.setCaption("Address");
-		addWindow.setContent(verticalLayout);
+		
+		
+		
+		popUp.setContent(verticalLayout);
 		buttonLayout.addComponents(saveButton, cancelButton);
 		verticalLayout.addComponents(nameField, addressField, buttonLayout);
-		return addWindow;
+    	
+		return popUp;
     }
 
     public void onNameFilterTextChange(HasValue.ValueChangeEvent<String> event) {

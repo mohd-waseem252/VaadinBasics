@@ -48,7 +48,7 @@ public class TodoUI extends UI {
 		addFilter();
 		addGrid();
 		
-
+		
 	}
 
 	private void addFilter() {
