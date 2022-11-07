@@ -6,6 +6,7 @@ import com.vaadin.data.HasValue;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.entity.Person;
 import com.vaadin.entity.PersonGrid;
+import com.vaadin.event.MouseEvents.ClickListener;
 import com.vaadin.event.MouseEvents.DoubleClickEvent;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.shared.Registration;
@@ -14,10 +15,13 @@ import com.vaadin.ui.Button;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.Column;
 import com.vaadin.ui.Grid.SelectionMode;
+import com.vaadin.ui.MenuBar.MenuItem;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
 
 public class FilteredGridLayout extends VerticalLayout {
@@ -29,6 +33,7 @@ public class FilteredGridLayout extends VerticalLayout {
     private TextField idFilter;
     private TextField addressFilter;
     private Label label;
+    private MenuBar menuBar;
 
     public FilteredGridLayout() {
     	personGrid = new PersonGrid();
@@ -43,21 +48,16 @@ public class FilteredGridLayout extends VerticalLayout {
         	personGrid.remove(personGrid.getSelectedItems());
         	personGrid.getDataProvider().refreshAll();
         	});
-    	
-
-    	
-    	
-    	
-    	
+    
         nameFilter = new TextField();
         nameFilter.setPlaceholder("Name...");
-        nameFilter.addValueChangeListener(this::onNameFilterTextChange);
+        nameFilter.addValueChangeListener(this::mainFilter);
         
         
         
         addressFilter = new TextField();
         addressFilter.setPlaceholder("address...");
-        addressFilter.addValueChangeListener(this::onAddressFilterTextChange);
+        addressFilter.addValueChangeListener(this::mainFilter);
         
         idFilter = new TextField();
         idFilter.setPlaceholder("id");
@@ -104,36 +104,69 @@ public class FilteredGridLayout extends VerticalLayout {
 //        menu.addComponent(button);
 //        menu.setComponentAlignment(button, Alignment.BOTTOM_RIGHT);
         personGrid.setSizeFull();
-       
+        
         addComponent(button);
+        addComponent(gridMenuBar());
         setComponentAlignment(button, Alignment.TOP_RIGHT);
         addComponent(personGrid);
-       
+        
      
+    }
+    
+    public MenuBar gridMenuBar() {
+    	menuBar = new MenuBar();
+    	
+    	MenuBar.Command command = new MenuBar.Command() {
+			
+			@Override
+			public void menuSelected(MenuItem selectedItem) {
+				openWindow();
+				
+			}
+			
+			
+		};
+    	menuBar.addItem("Add",VaadinIcons.PLUS, command);  	
+    	return menuBar;
+    }
+    
+    public Window openWindow() {
+    	Window addWindow = new Window("Add Person");
+		VerticalLayout verticalLayout = new VerticalLayout();
+		TextField nameField = new TextField();
+		Button saveButton = new Button("save");
+		Button cancelButton = new Button("cancel");
+		
+		HorizontalLayout buttonLayout = new HorizontalLayout();
+		nameField.setCaption("Name");
+		TextField addressField = new TextField();
+		addressField.setCaption("Address");
+		addWindow.setContent(verticalLayout);
+		buttonLayout.addComponents(saveButton, cancelButton);
+		verticalLayout.addComponents(nameField, addressField, buttonLayout);
+		return addWindow;
     }
 
     public void onNameFilterTextChange(HasValue.ValueChangeEvent<String> event) {
         ListDataProvider<Person> dataProvider = (ListDataProvider<Person>) personGrid.getDataProvider();
-        dataProvider.setFilter(Person::getName, s -> caseInsensitiveContains(s, event.getValue()));
+        dataProvider.addFilter(Person::getName, s -> caseInsensitiveContains(s, event.getValue()));
+       
     }
     
     public void onAddressFilterTextChange(HasValue.ValueChangeEvent<String> event) {
         ListDataProvider<Person> dataProvider = (ListDataProvider<Person>) personGrid.getDataProvider();
-        dataProvider.setFilter(Person::getAddress, s-> caseInsensitiveContains(s, event.getValue()));
+        dataProvider.addFilter(Person::getAddress, s-> caseInsensitiveContains(s, event.getValue()));
+       
     }
     
-    public void mainFilter() {
+    public void mainFilter(HasValue.ValueChangeEvent<String> event) {
     	ListDataProvider<Person> listDataProvider = (ListDataProvider<Person>) personGrid.getDataProvider();
-//    	listDataProvider.setFilter(person->{
-//    		boolean idFilterMatch= true;
-//    		boolean nameFilterMatch = true;
-//    		boolean addressFilterMatch = true;
-//    	
-//    		if(!nameFilter.isEmpty()) {
-//    			
-//    		}
-//    	
-//    	});
+    	listDataProvider.setFilter((item) -> {
+    		boolean nameDoesMatch = item.getName().toLowerCase().contains(nameFilter.getValue().toLowerCase());
+    		boolean addressDoesMatch = item.getAddress().toLowerCase().contains(addressFilter.getValue().toLowerCase());
+    		
+    		return nameDoesMatch && addressDoesMatch;
+    	});
     	
     	
     }
@@ -141,6 +174,7 @@ public class FilteredGridLayout extends VerticalLayout {
     public void onIdFilterTextChange(HasValue.ValueChangeEvent<String> event) {
         ListDataProvider<Person> dataProvider = (ListDataProvider<Person>) personGrid.getDataProvider();
         dataProvider.setFilter(Person::getId, s-> caseInsensitiveContains(Double.toString(s), event.getValue()));
+      
     }
 
     private Boolean caseInsensitiveContains(String where, String what) {

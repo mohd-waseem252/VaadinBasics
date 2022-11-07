@@ -57,4 +57,9 @@ public class PersonGrid extends Grid<Person> {
 			getDataProvider().refreshAll();
 		});
 	}
+	
+	public void addToList(Person person) {
+		persons.add(person);
+		getDataProvider().refreshAll();
+	}
 }
